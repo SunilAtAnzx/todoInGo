@@ -1,10 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
 type todo struct {
@@ -19,29 +20,41 @@ var todos = []todo{
 	{ID: "3", Item: "Record Video", Completed: false},
 }
 
-func getTodos(ctx *gin.Context) {
-	ctx.IndentedJSON(http.StatusOK, todos)
+func getTodos(response http.ResponseWriter, request *http.Request) {
+	response.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(response).Encode(todos)
 }
 
-func addTodo(ctx *gin.Context) {
+func addTodo(response http.ResponseWriter, request *http.Request) {
 	var newTodo todo
-	if err := ctx.BindJSON(&newTodo); err != nil {
-		ctx.AbortWithError(http.StatusBadRequest, err)
+	err := json.NewDecoder(request.Body).Decode(&newTodo)
+	if err != nil {
+		http.Error(response, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	todos = append(todos, newTodo)
-	ctx.IndentedJSON(http.StatusCreated, newTodo)
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusCreated)
+	json.NewEncoder(response).Encode(newTodo)
 }
 
-func getTodo(ctx *gin.Context) {
-	id := ctx.Param("id")
+func getTodo(response http.ResponseWriter, request *http.Request) {
+	params := mux.Vars(request)
+	id := params["id"]
 	todo, err := getTodoById(id)
 
 	if err != nil {
-		ctx.IndentedJSON(http.StatusNotFound, gin.H{"message": "Todo not found"})
+		response.Header().Set("Content-Type", "application/json")
+		response.WriteHeader(http.StatusNotFound)
+		payload := make(map[string]string)
+		payload["message"] = "Todo not found"
+		json.NewEncoder(response).Encode(payload)
 		return
 	}
-	ctx.IndentedJSON(http.StatusOK, todo)
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(todo)
 }
 
 func getTodoById(id string) (*todo, error) {
@@ -54,26 +67,41 @@ func getTodoById(id string) (*todo, error) {
 	return nil, errors.New("todo not found")
 }
 
-func toggleTodoStatus(ctx *gin.Context) {
-	id := ctx.Param("id")
+func toggleTodoStatus(response http.ResponseWriter, request *http.Request) {
+	params := mux.Vars(request)
+	id := params["id"]
+
 	todo, err := getTodoById(id)
 
 	if err != nil {
-		ctx.IndentedJSON(http.StatusNotFound, gin.H{"message": "Todo not found"})
+		response.Header().Set("Content-Type", "application/json")
+		response.WriteHeader(http.StatusNotFound)
+		payload := make(map[string]string)
+		payload["message"] = "Todo not found"
+		json.NewEncoder(response).Encode(payload)
 		return
 	}
 
 	todo.Completed = !todo.Completed
-	ctx.IndentedJSON(http.StatusOK, todo)
+
+	response.Header().Set("Content-Type", "application/json")
+	response.WriteHeader(http.StatusOK)
+	json.NewEncoder(response).Encode(todo)
 }
 
 func main() {
-	router := gin.Default()
 
-	router.GET("/todos", getTodos)
-	router.POST("/todos", addTodo)
-	router.GET("/todos/:id", getTodo)
-	router.PATCH("/todos/:id", toggleTodoStatus)
+	router := mux.NewRouter()
 
-	router.Run("localhost:9090")
+	router.HandleFunc("/todos", getTodos).Methods("GET")
+	router.HandleFunc("/todos", addTodo).Methods("POST")
+	router.HandleFunc("/todos/{id}", getTodo).Methods("GET")
+	router.HandleFunc("/todos/{id}", toggleTodoStatus).Methods("PATCH")
+
+	err := http.ListenAndServe(":5000", router)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }

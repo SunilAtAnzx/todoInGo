@@ -2,107 +2,81 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
-
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
-
+	"github.com/gorilla/mux"
+	"io"
 	"net/http"
 	"net/http/httptest"
-
 	"testing"
 )
 
-func SetUpRouter() *gin.Engine {
-	router := gin.Default()
-	gin.SetMode(gin.ReleaseMode)
-	return router
+func toReader(content string) io.Reader {
+	return bytes.NewBuffer([]byte(content))
 }
-func TestAddTodo(t *testing.T) {
-	r := SetUpRouter()
-	r.POST("/todos", addTodo)
 
-	todoRequest := todo{
-		ID:        "100",
-		Item:      "Goto Sleep",
-		Completed: false,
+func checkStatusCode(code int, want int, t *testing.T) {
+	if code != want {
+		t.Errorf("Wrong status code: got %v want %v", code, want)
 	}
-	jsonValue, _ := json.Marshal(todoRequest)
-	req, _ := http.NewRequest("POST", "/todos", bytes.NewBuffer(jsonValue))
-
-	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-
-	var todoResponse todo
-	json.Unmarshal(w.Body.Bytes(), &todoResponse)
-
-	assert.Equal(t, http.StatusCreated, w.Code)
-	assert.NotEmpty(t, todoResponse)
 }
 
 func TestGetTodos(t *testing.T) {
-	r := SetUpRouter()
-	r.GET("/todos", getTodos)
-	req, _ := http.NewRequest("GET", "/todos", nil)
+	r, _ := http.NewRequest("GET", "/todos", nil)
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-
-	var todos []todo
-	json.Unmarshal(w.Body.Bytes(), &todos)
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.NotEmpty(t, todos)
+	handler := http.HandlerFunc(getTodos)
+	handler.ServeHTTP(w, r)
+	checkStatusCode(w.Code, http.StatusOK, t)
 }
 
-func TestGetTodo(t *testing.T) {
-	r := SetUpRouter()
-	r.GET("/todos/:id", getTodo)
-	req, _ := http.NewRequest("GET", "/todos/1", nil)
+func TestGetTodosByIdForStatusNotFound(t *testing.T) {
+	r, _ := http.NewRequest("GET", "/todos/id", nil)
+	r = mux.SetURLVars(r, map[string]string{"id": "10"})
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-
-	var todo todo
-	json.Unmarshal(w.Body.Bytes(), &todo)
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	assert.NotEmpty(t, todo)
+	handler := http.HandlerFunc(getTodo)
+	handler.ServeHTTP(w, r)
+	checkStatusCode(w.Code, http.StatusNotFound, t)
 }
 
-func TestGetTodoNotFound(t *testing.T) {
-	r := SetUpRouter()
-	r.GET("/todos/:id", getTodo)
-	req, _ := http.NewRequest("GET", "/todos/5", nil)
+func TestGetTodosByIdWhenId(t *testing.T) {
+	r, _ := http.NewRequest("GET", "/todos/id", nil)
+	r = mux.SetURLVars(r, map[string]string{"id": "1"})
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
+	handler := http.HandlerFunc(getTodo)
+	handler.ServeHTTP(w, r)
+	checkStatusCode(w.Code, http.StatusOK, t)
+}
 
-	var todo todo
-	json.Unmarshal(w.Body.Bytes(), &todo)
-	assert.Equal(t, http.StatusNotFound, w.Code)
+func TestAddTodos(t *testing.T) {
+	var rqBody = toReader(`{"id": "10","item": "Clean Room1","completed": false}`)
+	r, _ := http.NewRequest("POST", "/todos", rqBody)
+	w := httptest.NewRecorder()
+	handler := http.HandlerFunc(addTodo)
+	handler.ServeHTTP(w, r)
+	checkStatusCode(w.Code, http.StatusCreated, t)
+}
 
-	assert.Empty(t, todo)
+func TestAddTodosForStatusBadRequest(t *testing.T) {
+	var rqBody = toReader(`{"id": "10","item": "Clean Room1","completed": false,"isError": true,}`)
+	r, _ := http.NewRequest("POST", "/todos", rqBody)
+	w := httptest.NewRecorder()
+	handler := http.HandlerFunc(addTodo)
+	handler.ServeHTTP(w, r)
+	checkStatusCode(w.Code, http.StatusBadRequest, t)
 }
 
 func TestToggleTodoStatus(t *testing.T) {
-	r := SetUpRouter()
-	r.GET("/todos/:id", toggleTodoStatus)
-	req, _ := http.NewRequest("GET", "/todos/1", nil)
+	r, _ := http.NewRequest("PATCH", "/todos/id", nil)
+	r = mux.SetURLVars(r, map[string]string{"id": "1"})
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-
-	var todo todo
-	json.Unmarshal(w.Body.Bytes(), &todo)
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.NotEmpty(t, todo)
+	handler := http.HandlerFunc(toggleTodoStatus)
+	handler.ServeHTTP(w, r)
+	checkStatusCode(w.Code, http.StatusOK, t)
 }
 
-func TestToggleTodoStatusNotFound(t *testing.T) {
-	r := SetUpRouter()
-	r.GET("/todos/:id", toggleTodoStatus)
-	req, _ := http.NewRequest("GET", "/todos/10", nil)
+func TestToggleTodoStatusForStatusNotFound(t *testing.T) {
+	r, _ := http.NewRequest("PATCH", "/todos/id", nil)
+	r = mux.SetURLVars(r, map[string]string{"id": "100"})
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, req)
-
-	var todo todo
-	json.Unmarshal(w.Body.Bytes(), &todo)
-	assert.Equal(t, http.StatusNotFound, w.Code)
-	assert.Empty(t, todo)
+	handler := http.HandlerFunc(toggleTodoStatus)
+	handler.ServeHTTP(w, r)
+	checkStatusCode(w.Code, http.StatusNotFound, t)
 }
