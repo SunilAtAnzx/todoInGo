@@ -15,5 +15,4 @@ RUN /usr/sbin/update-ca-certificates
 RUN mkdir /app
 COPY . /app
 WORKDIR /app
-RUN go build -o main .
-CMD ["/app/main"]
+CMD ["./todoInGoService.sh"]

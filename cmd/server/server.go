@@ -13,6 +13,7 @@ import (
 
 func Run() {
 
+	fmt.Println("Staring Server")
 	ctx, stopHandler := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stopHandler()
 

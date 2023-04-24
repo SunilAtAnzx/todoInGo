@@ -1,6 +1,6 @@
 BINARY_NAME=todoInGo
 
-coverage:
+coverage: build
 	go test -c ./ -cover -covermode=set -coverpkg=./... -o bin/$(BINARY_NAME) -tags=integration
 	./bin/$(BINARY_NAME).test -test.coverprofile coverage.integration.out
 
@@ -29,4 +29,7 @@ run-test: bin/$(BINARY_NAME).test
 server:
 	go run main.go
 
-.PHONY: build run-test test server coverage
+docker-image:
+	docker build -t go-todo-img .
+
+.PHONY: build run-test test server coverage docker-image
