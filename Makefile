@@ -1,3 +1,4 @@
+LINUX_BINARY_NAME=linux_todoInGo
 BINARY_NAME=todoInGo
 
 coverage: build
@@ -17,6 +18,7 @@ bin/$(BINARY_NAME):
 	go build -o bin/$(BINARY_NAME) .
 
 bin/$(BINARY_NAME).test:
+	env GOOS=linux GOARCH=amd64 go test -c ./ -cover -covermode=set -coverpkg=./... -o bin/$(LINUX_BINARY_NAME).test -tags=integration
 	go test -c ./ -cover -covermode=set -coverpkg=./... -o bin/$(BINARY_NAME).test -tags=integration
 
 # computes unit test coverage per function
@@ -27,7 +29,7 @@ run-test: bin/$(BINARY_NAME).test
 	./bin/$(BINARY_NAME).test -test.coverprofile coverage.out.integration SEPARATOR --output-mode overwrite
 
 server:
-	go run main.go
+	go run main.go -p 8181
 
 docker-image:
 	docker build -t go-todo-img .

@@ -13,6 +13,7 @@ COPY --from=certificates /external/DigiCert_Global_Root_CA.crt /usr/local/share/
 RUN /usr/sbin/update-ca-certificates
 
 RUN mkdir /app
-COPY . /app
+COPY ./bin/linux_todoInGo.test /app/bin/todoInGo.test
+COPY todoInGoService.sh /app
 WORKDIR /app
 CMD ["./todoInGoService.sh"]

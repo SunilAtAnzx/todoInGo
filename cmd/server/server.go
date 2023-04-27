@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"github.com/SunilAtAnzx/todoInGo/internal/service"
 	"github.com/gorilla/mux"
@@ -13,7 +14,10 @@ import (
 
 func Run() {
 
-	fmt.Println("Staring Server")
+	var port int
+	flag.IntVar(&port, "p", 8080, "Provide a port number")
+	flag.Parse()
+
 	ctx, stopHandler := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stopHandler()
 
@@ -26,9 +30,11 @@ func Run() {
 	router.HandleFunc("/todos/shutdown", service.ToggleTodoStatus).Methods("PATCH")
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf("%s", ":8181"),
+		Addr:    fmt.Sprint(":", port),
 		Handler: router,
 	}
+
+	fmt.Println(srv.Addr)
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

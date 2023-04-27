@@ -3,7 +3,7 @@
 function collect_coverage() {
 
 COVERAGE_DATA_PATH=coverage.integration.out
-COVERAGE_COLLECTOR_URL=http://localhost:8282/api/upload
+COVERAGE_COLLECTOR_URL=http://collector-service:8282/api/upload
 
 if [ ! -f "$COVERAGE_DATA_PATH" ]; then
   echo "[trap:EXIT]- coverage data (path: $COVERAGE_DATA_PATH) does not exist."
@@ -28,7 +28,7 @@ echo "[trap:EXIT]- pushing coverage data (url: $COVERAGE_COLLECTOR_URL) to colle
 
 function runInstrumentedBinary() {
   trap "collect_coverage" EXIT
-  make coverage
+  ./bin/todoInGo.test -test.coverprofile coverage.integration.out
 }
 
 runInstrumentedBinary
