@@ -32,6 +32,6 @@ server:
 	go run main.go -p 8181
 
 docker-image:
-	docker build -t go-todo-img .
+	docker build -t todo-app-img .
 
 .PHONY: build run-test test server coverage docker-image
