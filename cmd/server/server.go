@@ -34,7 +34,7 @@ func Run() {
 		Handler: router,
 	}
 
-	fmt.Println(srv.Addr)
+	fmt.Println("Server started in port :", srv.Addr)
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
