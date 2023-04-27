@@ -3,7 +3,7 @@
 function collect_coverage() {
 
 COVERAGE_DATA_PATH=coverage.integration.out
-COVERAGE_COLLECTOR_URL=http://collector-service:8080/api/upload
+COVERAGE_COLLECTOR_URL=http://collector-service:8282/api/upload
 
 if [ ! -f "$COVERAGE_DATA_PATH" ]; then
   echo "[trap:EXIT]- coverage data (path: $COVERAGE_DATA_PATH) does not exist."
