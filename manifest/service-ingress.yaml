@@ -3,24 +3,23 @@ kind: Ingress
 apiVersion: networking.k8s.io/v1
 metadata:
   name: service-ingress
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
+  ingressClassName: nginx
   rules:
-  - http:
-      paths:
-      - pathType: Prefix
-        path: /api(/|$)(.*)
-        backend:
-          service:
-            name: collector-service
-            port:
-              number: 8282
-      - pathType: Prefix
-        path: /todos(/|$)(.*)
-        backend:
-          service:
-            name: todo-service
-            port:
-              number: 8181
+    - http:
+        paths:
+          - pathType: Prefix
+            path: /todos
+            backend:
+              service:
+                name: todo-service
+                port:
+                  number: 8080
+          - pathType: Prefix
+            path: /api
+            backend:
+              service:
+                name: collector-service
+                port:
+                  number: 8080
 ---

@@ -1,3 +1,4 @@
+---
 kind: Pod
 apiVersion: v1
 metadata:
@@ -6,11 +7,9 @@ metadata:
     app: todo
 spec:
   containers:
-  - name: todo-app
-    image: docker.io/library/go-todo-img
-    imagePullPolicy: Never
-    ports:
-    - containerPort: 8181
+    - name: todo-app
+      image: docker.io/library/todo-app-img
+      imagePullPolicy: Never
 ---
 kind: Service
 apiVersion: v1
@@ -20,5 +19,8 @@ spec:
   selector:
     app: todo
   ports:
-  - port: 8181
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: todo-http
 ---

@@ -1,3 +1,4 @@
+---
 kind: Pod
 apiVersion: v1
 metadata:
@@ -6,11 +7,9 @@ metadata:
     app: collector
 spec:
   containers:
-  - name: collector-app
-    image: docker.io/library/go-collector-img
-    imagePullPolicy: Never
-    ports:
-    - containerPort: 8282
+    - name: collector-app
+      image: docker.io/library/collector-app-img
+      imagePullPolicy: Never
 ---
 kind: Service
 apiVersion: v1
@@ -20,5 +19,8 @@ spec:
   selector:
     app: collector
   ports:
-  - port: 8282
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: collector-http
 ---

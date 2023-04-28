@@ -15,7 +15,7 @@ import (
 func Run() {
 
 	var port int
-	flag.IntVar(&port, "p", 8181, "Provide a port number")
+	flag.IntVar(&port, "p", 8080, "Provide a port number")
 	flag.Parse()
 
 	ctx, stopHandler := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
